@@ -1,0 +1,153 @@
+#include <LiquidCrystal.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_ADXL345_U.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial bt(2,3); /* (Rx,Tx) */
+
+LiquidCrystal lcd{8, 9, 10, 11, 12, 13};
+
+Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified();
+
+signed long i, x, y, z, d1, d2, d3, diff = 3;
+char str[32];
+
+const char gesture_name[8][16] = {
+  "THANK YOU",   //1
+  "HELLO",    //2
+  "MOTHER   ",    //3
+  "STOP  ",   //4
+  "MOTHER  ",    //5
+//  "How_are_U",  //6
+//  "Leg_Pain",   //7
+//  "Success",    //8
+};
+
+const int action[5][3] = {
+  6, -6, 4,    //1
+  -5, 6, 5,    //2
+  -2, -9, 4,    //3
+  9, -1, 1,    //4
+  -1, -9, 4,    //5
+ // 275, 363, 330,    //6
+ // 336, 282, 380,    //7
+ // 300, 375, 300,    //8
+};
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("Hand Guesture");
+
+  bt.begin(9600);
+  bt.println("Device Started");
+
+  if(!accel.begin())
+   {
+      Serial.println("No valid sensor found");
+      while(1);
+   }
+
+  lcd.begin(16, 2);
+  lcd.setCursor(0,0);
+  lcd.print("Hand Guesture");
+  delay(1000);
+ lcd.setCursor(0,0);
+ lcd.print("AX   AY   AZ   ");
+}
+
+void loop() {
+
+sensors_event_t event;
+accel.getEvent(&event);
+x=event.acceleration.x;
+y=event.acceleration.y;
+z=event.acceleration.z;
+ 
+  lcd.setCursor(0,1);
+  sprintf(str, "%4ld %4ld %4ld", x, y, z);
+  lcd.print(str);
+  delay(500);
+  Serial.println(str);
+
+  for (i = 0; i < 4; i++) {
+    d1 = action[i][0] - x;
+    d2 = action[i][1] - y;
+    d3 = action[i][2] - z;
+
+    if ((abs(d1) < diff) && (abs(d2) < diff) && (abs(d3) < diff)) {
+      sprintf(str, "\f%s", gesture_name[i]);
+      lcd.print(str);
+
+      switch (i) {
+        case 0:
+         bt.println('A');
+         lcd.setCursor(0,1);
+         lcd.print("THANK YOU ");
+         Serial.println("Thank You");
+         delay(3000);
+         lcd.setCursor(0,1);
+         lcd.print("                 ");
+          break;
+        case 1:
+         bt.println('B');
+         lcd.setCursor(0,1);
+         lcd.print(" HELLO   ");
+         delay(3000);
+         lcd.setCursor(0,1);
+         lcd.print("                 ");
+          break;
+        case 2:
+           bt.println('C');
+         lcd.setCursor(0,1);
+         lcd.print("  HELP  ");
+         delay(3000);
+         lcd.setCursor(0,1);
+         lcd.print("                 ");
+          break;
+        case 3:
+          bt.println('D');
+         lcd.setCursor(0,1);
+         lcd.print("  STOP   ");
+         delay(3000);
+         lcd.setCursor(0,1);
+         lcd.print("                 ");
+          break;
+        case 4:
+         bt.println('E');
+         lcd.setCursor(0,1);
+         lcd.print("  DEAF  ");
+         delay(3000);
+         lcd.setCursor(0,1);
+         lcd.print("                 ");
+          break;
+      /*  case 5:
+         bt.println('F');
+         lcd.setCursor(0,1);
+         lcd.print("                 ");
+         delay(3000);
+         lcd.setCursor(0,1);
+         lcd.print("                 ");
+          break;
+        case 6:
+          bt.println('G');
+         lcd.setCursor(0,1);
+         lcd.print("                 ");
+         delay(3000);
+         lcd.setCursor(0,1);
+         lcd.print("                 ");
+          break;
+        case 7:
+           bt.println('H');
+         lcd.setCursor(0,1);
+         lcd.print("                 ");
+         delay(3000);
+         lcd.setCursor(0,1);
+         lcd.print("                 ");
+          break;    */
+      }
+
+      delay(1000);
+    }
+  }
+}
